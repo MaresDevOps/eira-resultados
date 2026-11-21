@@ -2,6 +2,9 @@
 
 **Reto 4 · Vibeathon Nerdearla 2026 · Prototipo funcional**
 
+🔗 **Demo en vivo:** http://18.217.201.5:3000 (AWS EC2 · Docker: app + PostgreSQL + Valkey)
+Usuarios demo en la sección 1 — contraseña `demo1234` o acceso rápido de 1 clic.
+
 Desarrollado para el **Programa Tamizaje Rosa** de **EIRA, Movimiento Rosa A.C.**
 (fundada en 2017, Ciudad Guzmán, Jalisco; más de **51,000 personas beneficiadas**
 acumuladas a septiembre de 2026).
@@ -16,7 +19,6 @@ o sin conectividad propia.
 
 ---
 
-> **Para el jurado:** guion de demo de 5 minutos y texto de Devpost en [DEVPOST.md](DEVPOST.md).
 
 ## 1. Instalación y ejecución (2 comandos)
 

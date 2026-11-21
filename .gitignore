@@ -22,3 +22,7 @@ storage/pdfs/*
 .e2e-tmp/
 demo-video/
 eira-key.pem
+DEVPOST.md
+CONTEXTO-SESION.md
+eira-key.pem
+tsconfig.tsbuildinfo
