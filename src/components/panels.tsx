@@ -272,10 +272,20 @@ export function MedicoPanel({ onChanged }: { onChanged: () => void }) {
   const [candidatos, setCandidatos] = useState<Patient[]>([]);
   const [reasignarId, setReasignarId] = useState("");
 
-  const pendientes = studies.filter((s) => s.estado === "EN_REVISION_CLINICA" || s.estado === "CARGADO");
-  const autorizados = studies.filter((s) => s.estado === "AUTORIZADO_PARA_ENTREGA");
-  const prioritarios = studies.filter((s) => s.estado === "REQUIERE_CONTACTO_MEDICO");
-  const revocados = studies.filter((s) => s.estado === "REVOCADO_POR_CORRECCION");
+  const [qMed, setQMed] = useState("");
+  const [fEstado, setFEstado] = useState("TODOS");
+
+  const matchFiltro = (s: Study) =>
+    (!qMed ||
+      s.patient?.nombreCompleto.toLowerCase().includes(qMed.toLowerCase()) ||
+      (s.folio ?? "").toLowerCase().includes(qMed.toLowerCase()) ||
+      (s.patient?.curp ?? "").toLowerCase().includes(qMed.toLowerCase())) &&
+    (fEstado === "TODOS" || s.estado === fEstado);
+
+  const pendientes = studies.filter((s) => (s.estado === "EN_REVISION_CLINICA" || s.estado === "CARGADO") && matchFiltro(s));
+  const autorizados = studies.filter((s) => s.estado === "AUTORIZADO_PARA_ENTREGA" && matchFiltro(s));
+  const prioritarios = studies.filter((s) => s.estado === "REQUIERE_CONTACTO_MEDICO" && matchFiltro(s));
+  const revocados = studies.filter((s) => s.estado === "REVOCADO_POR_CORRECCION" && matchFiltro(s));
   const [copiado, setCopiado] = useState(false);
 
   async function autorizar(s: Study, prioritario = false) {
@@ -350,6 +360,21 @@ export function MedicoPanel({ onChanged }: { onChanged: () => void }) {
   return (
     <div className="space-y-5">
       {err && <p className="rounded-xl bg-red-50 p-3 font-bold text-red-700">{err}</p>}
+
+      <div className="card flex flex-col gap-3 sm:flex-row sm:items-center">
+        <input
+          className="input flex-1"
+          placeholder="Buscar por paciente, folio (EIRA-2026-…) o CURP"
+          value={qMed}
+          onChange={(e) => setQMed(e.target.value)}
+        />
+        <select className="input sm:w-72" value={fEstado} onChange={(e) => setFEstado(e.target.value)}>
+          <option value="TODOS">Todos los estados</option>
+          {Object.entries(ESTADO_LABEL).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </select>
+      </div>
 
       {lastNotify && (
         <div className="card border-2 border-[var(--rosa)]">
@@ -559,6 +584,7 @@ export function MedicoPanel({ onChanged }: { onChanged: () => void }) {
 export function PromotoraPanel({ onChanged }: { onChanged: () => void }) {
   const { studies, reload } = useStudies();
   const [q, setQ] = useState("");
+  const [fEstadoProm, setFEstadoProm] = useState("TODOS");
   const [selected, setSelected] = useState<Study | null>(null);
   const [sede, setSede] = useState(SEDES[0]);
   const [busy, setBusy] = useState(false);
@@ -569,9 +595,10 @@ export function PromotoraPanel({ onChanged }: { onChanged: () => void }) {
     ["AUTORIZADO_PARA_ENTREGA", "NOTIFICADO", "EN_REVISION_CLINICA", "REQUIERE_CONTACTO_MEDICO"].includes(s.estado)
   );
   const filtrados = elegibles.filter((s) =>
-    !q ||
-    s.patient?.nombreCompleto.toLowerCase().includes(q.toLowerCase()) ||
-    (s.folio ?? "").toLowerCase().includes(q.toLowerCase())
+    (!q ||
+      s.patient?.nombreCompleto.toLowerCase().includes(q.toLowerCase()) ||
+      (s.folio ?? "").toLowerCase().includes(q.toLowerCase())) &&
+    (fEstadoProm === "TODOS" || s.estado === fEstadoProm)
   );
   const prioritarios = filtrados.filter((s) => s.estado === "REQUIERE_CONTACTO_MEDICO");
 
@@ -605,7 +632,15 @@ export function PromotoraPanel({ onChanged }: { onChanged: () => void }) {
           Para pacientes sin celular, correo o internet. Valida la identidad de forma presencial
           (nombre + fecha de nacimiento o folio) antes de entregar.
         </p>
-        <input className="input" placeholder="Buscar por nombre o folio (ej. EIRA-2026-…)" value={q} onChange={(e) => setQ(e.target.value)} />
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input className="input flex-1" placeholder="Buscar por nombre o folio (ej. EIRA-2026-…)" value={q} onChange={(e) => setQ(e.target.value)} />
+          <select className="input sm:w-56" value={fEstadoProm} onChange={(e) => setFEstadoProm(e.target.value)}>
+            <option value="TODOS">Todos los estados</option>
+            {["AUTORIZADO_PARA_ENTREGA", "NOTIFICADO", "EN_REVISION_CLINICA", "REQUIERE_CONTACTO_MEDICO"].map((e) => (
+              <option key={e} value={e}>{ESTADO_LABEL[e] ?? e}</option>
+            ))}
+          </select>
+        </div>
 
         {prioritarios.length > 0 && (
           <div className="mt-3 rounded-xl border-2 border-red-300 bg-red-50 p-3">
@@ -765,6 +800,9 @@ const ACTION_LABELS: Record<string, string> = {
 
 export function AuditoriaPanel() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [qAudit, setQAudit] = useState("");
+  const [fAccion, setFAccion] = useState("TODOS");
+  const [fRol, setFRol] = useState("TODOS");
   const load = useCallback(async () => {
     const r = await fetch("/api/audit?limit=200");
     const d = await r.json();
@@ -776,6 +814,17 @@ export function AuditoriaPanel() {
     return () => clearInterval(t);
   }, [load]);
 
+  const acciones = [...new Set(logs.map((l) => l.action))].sort();
+  const roles = [...new Set(logs.map((l) => l.role))].sort();
+  const filtrados = logs.filter((l) =>
+    (!qAudit ||
+      l.actorName.toLowerCase().includes(qAudit.toLowerCase()) ||
+      (l.detail ?? "").toLowerCase().includes(qAudit.toLowerCase()) ||
+      (l.email ?? "").toLowerCase().includes(qAudit.toLowerCase())) &&
+    (fAccion === "TODOS" || l.action === fAccion) &&
+    (fRol === "TODOS" || l.role === fRol)
+  );
+
   return (
     <div className="space-y-4">
       <div className="card flex flex-wrap items-center justify-between gap-3">
@@ -786,6 +835,26 @@ export function AuditoriaPanel() {
         <a href="/api/audit/export.csv" className="btn-primary" download>
           Exportar Reporte CSV
         </a>
+      </div>
+      <div className="card flex flex-col gap-3 sm:flex-row sm:items-center">
+        <input
+          className="input flex-1"
+          placeholder="Buscar por actor, email o detalle"
+          value={qAudit}
+          onChange={(e) => setQAudit(e.target.value)}
+        />
+        <select className="input sm:w-64" value={fAccion} onChange={(e) => setFAccion(e.target.value)}>
+          <option value="TODOS">Todas las acciones</option>
+          {acciones.map((a) => (
+            <option key={a} value={a}>{ACTION_LABELS[a] ?? a}</option>
+          ))}
+        </select>
+        <select className="input sm:w-44" value={fRol} onChange={(e) => setFRol(e.target.value)}>
+          <option value="TODOS">Todos los roles</option>
+          {roles.map((r) => (
+            <option key={r} value={r}>{r}</option>
+          ))}
+        </select>
       </div>
       <div className="card overflow-x-auto p-0">
         <table className="w-full min-w-[900px] text-sm">
@@ -800,7 +869,7 @@ export function AuditoriaPanel() {
             </tr>
           </thead>
           <tbody>
-            {logs.map((l) => (
+            {filtrados.map((l) => (
               <tr key={l.id} className="border-t border-slate-100">
                 <td className="whitespace-nowrap p-3">{fmtFecha(l.createdAt)}</td>
                 <td className="p-3">
@@ -813,8 +882,10 @@ export function AuditoriaPanel() {
                 <td className="p-3 font-mono text-xs">{l.ip}</td>
               </tr>
             ))}
-            {logs.length === 0 && (
-              <tr><td colSpan={6} className="p-6 text-center text-slate-500">Sin eventos todavía.</td></tr>
+            {filtrados.length === 0 && (
+              <tr><td colSpan={6} className="p-6 text-center text-slate-500">
+                {logs.length === 0 ? "Sin eventos todavía." : "Sin eventos que coincidan con los filtros."}
+              </td></tr>
             )}
           </tbody>
         </table>

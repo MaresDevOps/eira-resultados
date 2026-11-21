@@ -42,6 +42,7 @@ export interface AuditLog {
   studyId?: string | null;
   detail?: string | null;
   ip?: string | null;
+  email?: string | null;
   createdAt: string;
 }
 
