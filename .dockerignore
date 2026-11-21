@@ -1,0 +1,14 @@
+node_modules
+.next
+.env
+.env*.local
+prisma/dev.db
+prisma/dev.db-journal
+.e2e-tmp
+demo-video
+storage/pdfs/*
+!storage/pdfs/.gitkeep
+.git
+.gitignore
+*.log
+CONTEXTO-SESION.md

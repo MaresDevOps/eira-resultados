@@ -21,3 +21,4 @@ storage/pdfs/*
 *.log
 .e2e-tmp/
 demo-video/
+eira-key.pem

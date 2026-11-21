@@ -23,20 +23,36 @@ function fmtFecha(iso?: string | null) {
 }
 
 // ---------- PDF de prueba generado en el navegador (sin dependencias) ----------
-function makeSamplePdfBlob(): Blob {
-  const lines = [
-    "Estudio: Citologia cervical (Papanicolaou) - DEMO",
-    "Paciente: PACIENTE DE PRUEBA",
-    "Resultado: muestra satisfactoria para evaluacion",
-    "Este PDF es SINTETICO, generado para la demo de la hackathon.",
-  ];
-  const content = [
-    "BT", "/F1 16 Tf", "50 780 Td",
-    "(EIRA Movimiento Rosa A.C. - Resultado de Estudio) Tj",
-    "0 -28 Td", "/F1 11 Tf",
-    ...lines.map((l, i) => `${i === 0 ? "" : "0 -18 Td"}(${l.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)")}) Tj`),
-    "ET",
-  ].join("\n");
+function makeSamplePdfBlob(p?: { nombre?: string; curp?: string; fechaNac?: string }): Blob {
+  const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+  const hoy = new Date().toISOString().slice(0, 10);
+  const ops: string[] = ["BT", "/F1 15 Tf", "50 780 Td", "(EIRA Movimiento Rosa A.C.) Tj", "/F1 11 Tf"];
+  const line = (t: string, size = 10, gap = 14) => { ops.push(`/F1 ${size} Tf`, `0 -${gap} Td`, `(${esc(t)}) Tj`); };
+  const sec = (t: string) => { ops.push(`/F1 12 Tf`, `0 -18 Td`, `(${esc(t)}) Tj`); };
+  line("RESULTADO DE ESTUDIO - CITOLOGIA CERVICAL (PAPANICOLAOU)", 11, 18);
+  line(`Fecha de emision: ${hoy}    Folio: EIRA-${new Date().getFullYear()}-DEMO`, 9, 12);
+  line("Ciudad Guzman, Jalisco - Mexico", 9, 12);
+  sec("DATOS DE LA PACIENTE");
+  line(`Nombre: ${p?.nombre ?? "PACIENTE DE PRUEBA (FICTICIA)"}`);
+  line(`CURP: ${p?.curp ?? "XXXX000000XXXXXXXX"}      Fecha de nacimiento: ${p?.fechaNac ?? "---- -- --"}`);
+  line("Municipio: Ciudad Guzman, Jalisco");
+  sec("DATOS DEL ESTUDIO");
+  line("Tipo de estudio: Citologia cervical - Papanicolaou");
+  line(`Fecha de toma de muestra: ${hoy}`);
+  line("Sede de atencion: Sede EIRA Ciudad Guzman");
+  line("Tecnica: Citologia convencional - tincion de Papanicolaou");
+  sec("RESULTADO");
+  line("Calidad de la muestra: Muestra satisfactoria para evaluacion.");
+  line("Resultado citologico: Negativo para lesion intraepitelial o malignidad (ficticio).");
+  line("Observaciones: Epitelio escamoso normal. Consultar siempre con la medica tratante.");
+  sec("RECOMENDACIONES");
+  line("- Agenda tu consulta de seguimiento para revisar este resultado con una medica.");
+  line("- Si presentas sintomas (sangrado anormal, dolor), acude a tu unidad de salud.");
+  line("- Manten tu tamizaje al dia conforme a la NOM-014-SSA2.");
+  ops.push(`/F1 10 Tf`, `0 -26 Td`, `(______________________________) Tj`);
+  ops.push(`/F1 8 Tf`, `0 -14 Td`, `(Medica responsable - Ced. Prof. XXXXXXX (ficticia)) Tj`);
+  ops.push(`0 -24 Td`, `(DOCUMENTO SINTETICO DE DEMOSTRACION - NO ES UN REPORTE CLINICO REAL.) Tj`);
+  const content = ops.join("\n") + "\nET";
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
     "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
@@ -97,8 +113,12 @@ export function LaboratorioPanel({ onChanged }: { onChanged: () => void }) {
   }
 
   function generarPdf() {
-    const blob = makeSamplePdfBlob();
-    const f = new File([blob], "resultado-prueba.pdf", { type: "application/pdf" });
+    const blob = makeSamplePdfBlob(
+      patient
+        ? { nombre: patient.nombreCompleto, curp: patient.curp, fechaNac: patient.fechaNacimiento }
+        : undefined
+    );
+    const f = new File([blob], `resultado-EIRA-${patient ? patient.nombreCompleto.split(" ")[0] : "demo"}.pdf`, { type: "application/pdf" });
     setFile(f);
     if (fileRef.current) {
       const dt = new DataTransfer();

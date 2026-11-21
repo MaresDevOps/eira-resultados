@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
-import { buildSimplePdf } from "./pdf";
+import { buildResultPdf } from "./pdf";
 import { createAccessToken } from "./cache";
 import { hashPassword } from "./auth";
 
@@ -60,18 +60,20 @@ export async function runSeed(prisma: PrismaClient) {
 
   const patients = await Promise.all(PACIENTES_SEED.map((p) => prisma.patient.create({ data: p })));
 
-  const pdf1 = buildSimplePdf([
-    "Estudio: Citologia cervical (Papanicolaou)",
-    "Resultado: muestra satisfactoria para evaluacion",
-    "Observaciones: sin datos de alarma en este documento sintetico.",
-    "NOTA: documento de demostracion, no es un reporte clinico real.",
-  ]);
-  const pdf2 = buildSimplePdf([
-    "Estudio: Citologia cervical (Papanicolaou)",
-    "Resultado: muestra satisfactoria para evaluacion",
-    "Observaciones: control recomendado segun protocolo EIRA.",
-    "NOTA: documento de demostracion, no es un reporte clinico real.",
-  ]);
+  const pdf1 = buildResultPdf({
+    folio: "EIRA-2026-SEED1",
+    paciente: "PACIENTE FICTICIA DEL SEED",
+    curp: "SEED000000SEED0000",
+    fechaNacimiento: "1988-07-22",
+    sede: "Sede EIRA Ciudad Guzmán",
+  });
+  const pdf2 = buildResultPdf({
+    folio: "EIRA-2026-SEED2",
+    paciente: "PACIENTE FICTICIA DEL SEED",
+    curp: "SEED000000SEED0001",
+    fechaNacimiento: "1992-02-02",
+    sede: "Clínica Móvil Tecámac",
+  });
   await writeFile(path.join(PDF_DIR, "seed-1.pdf"), pdf1);
   await writeFile(path.join(PDF_DIR, "seed-2.pdf"), pdf2);
   const h1 = sha256(pdf1);

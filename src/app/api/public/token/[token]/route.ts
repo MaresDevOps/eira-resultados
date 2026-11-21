@@ -59,7 +59,17 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ token: str
 
   const body = await req.json().catch(() => ({}));
   const pin = String(body.pin ?? "").replace(/\D/g, "");
-  const fechaNac = String(body.fechaNacimiento ?? "").trim();
+
+  // Normaliza la fecha de nacimiento a ISO (yyyy-mm-dd); acepta
+  // dd/mm/aaaa y dd-mm-aaaa por si la paciente la escribe a mano.
+  const normFecha = (v: string): string => {
+    const s = v.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const m = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
+    if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+    return s;
+  };
+  const fechaNac = normFecha(String(body.fechaNacimiento ?? ""));
 
   const pinOk = pin.length === 4 && pin === payload.otp;
   const fechaOk = fechaNac !== "" && fechaNac === study.patient.fechaNacimiento;
