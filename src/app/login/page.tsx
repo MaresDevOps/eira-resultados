@@ -41,7 +41,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[var(--rosa-claro)] to-white px-4">
       <div className="w-full max-w-md space-y-5">
         <div className="text-center">
-          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--rosa)] text-3xl font-black text-white">E</div>
+          <img src="/brand/logo-eira.jpg" alt="EIRA" className="mx-auto mb-3 h-16 w-16 rounded-full object-cover" />
           <h1 className="text-3xl font-black text-slate-900">EIRA Movimiento Rosa</h1>
           <p className="text-slate-600">Programa Tamizaje Rosa · Entrega digital segura de resultados</p>
         </div>

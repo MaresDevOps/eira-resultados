@@ -41,9 +41,8 @@ export function Header({
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
         <div className="flex min-w-0 items-center gap-2">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--rosa)] text-xl font-black text-white">
-            E
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/logo-eira.jpg" alt="EIRA" className="h-10 w-10 shrink-0 rounded-full object-cover" />
           <div className="min-w-0">
             <p className="truncate text-lg font-black leading-tight text-slate-900"><span className="text-[var(--rosa-logo)]">EIRA</span> <span className="hidden sm:inline">Movimiento Rosa</span></p>
             <p className="truncate text-xs font-semibold text-slate-500">Programa Tamizaje Rosa</p>
