@@ -52,19 +52,21 @@ export default function Home() {
         {vista === "panel" && (
           <>
             {esAdmin && (
-              <div className="card flex flex-wrap items-center gap-2">
-                <p className="font-bold text-slate-600">Vista de admin — operar como:</p>
-                {(Object.keys(ROLE_INFO) as Role[]).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setPanelAdmin(r)}
-                    className={`rounded-full px-4 py-2 text-sm font-bold ${
-                      panelAdmin === r ? "bg-[var(--rosa)] text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    }`}
-                  >
-                    {ROLE_INFO[r].short}
-                  </button>
-                ))}
+              <div className="card">
+                <p className="mb-2 font-bold text-slate-600">Vista de admin — operar como:</p>
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                  {(Object.keys(ROLE_INFO) as Role[]).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setPanelAdmin(r)}
+                      className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold ${
+                        panelAdmin === r ? "bg-[var(--rosa)] text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      }`}
+                    >
+                      {ROLE_INFO[r].short}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
