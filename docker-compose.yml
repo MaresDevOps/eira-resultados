@@ -1,0 +1,54 @@
+# Stack completo: app Next.js + PostgreSQL + Valkey.
+#   docker compose up -d --build
+# La app queda en http://localhost:3000 (o IP pública de EC2).
+# El seed corre en el arranque del contenedor `app`.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-eira}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eira_demo}
+      POSTGRES_DB: ${POSTGRES_DB:-eira}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eira"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      args:
+        DB_PROVIDER: postgresql
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-eira}:${POSTGRES_PASSWORD:-eira_demo}@db:5432/${POSTGRES_DB:-eira}
+      VALKEY_URL: redis://valkey:6379
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      JWT_SECRET: ${JWT_SECRET:-cambia-esto-en-produccion}
+      SMS_PROVIDER: ${SMS_PROVIDER:-mock}
+      SMTP_ENABLED: ${SMTP_ENABLED:-false}
+      COOKIE_SECURE: ${COOKIE_SECURE:-0}
+    ports:
+      - "3000:3000"
+    volumes:
+      - pdfs:/app/storage/pdfs
+
+volumes:
+  pgdata:
+  pdfs:

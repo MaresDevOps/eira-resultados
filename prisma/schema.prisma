@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  nombreCompleto String
+  passwordHash  String
+  role          String   // LABORATORIO | MEDICO | PROMOTORA | ADMIN
+  createdAt     DateTime @default(now())
+}
+
+model Patient {
+  id               String   @id @default(cuid())
+  nombreCompleto   String
+  curp             String   @unique
+  fechaNacimiento  String // ISO yyyy-mm-dd (facilita comparación y LFPDPPP mínima)
+  telefono         String
+  municipio        String
+  programa         String   @default("Tamizaje Rosa")
+  email            String?
+  createdAt        DateTime @default(now())
+  studies          Study[]
+}
+
+model Study {
+  id               String   @id @default(cuid())
+  patientId        String
+  patient          Patient  @relation(fields: [patientId], references: [id])
+  estado           String   // CARGADO | EN_REVISION_CLINICA | AUTORIZADO_PARA_ENTREGA | NOTIFICADO | REQUIERE_CONTACTO_MEDICO | DESCARGADO_PACIENTE | ENTREGADO_ASISTIDO | REVOCADO_POR_CORRECCION
+  fechaToma        String
+  sede             String
+  pdfPath          String
+  pdfSha256        String   @default("")
+  folio            String   @unique @default("")
+  notaMedico       String?
+  tokenId          String?  // referencia al token vigente en Valkey/ memoria
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now())
+  autorizadoAt     DateTime?
+  notificadoAt     DateTime?
+  entregadoAt      DateTime?
+  entregadoModo    String?  // DIGITAL_PACIENTE | ASISTIDO_SEDE
+  sedeEntrega      String?
+  entregadoPor     String?
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorName  String
+  role       String
+  userId     String?
+  email      String?
+  action     String
+  patientId  String?
+  studyId    String?
+  detail     String?
+  ip         String?
+  createdAt  DateTime @default(now())
+}
+
+model SimulatedMessage {
+  id        String   @id @default(cuid())
+  studyId   String
+  toPhone   String
+  channel   String   // SMS_SIMULADO | CORREO_SIMULADO
+  body      String
+  otpCode   String?
+  createdAt DateTime @default(now())
+}
+
+model Receipt {
+  id           String   @id @default(cuid())
+  studyId      String   @unique
+  patientId    String
+  sede         String
+  deliveredBy  String
+  deliveredAt  DateTime @default(now())
+  observations String?
+}

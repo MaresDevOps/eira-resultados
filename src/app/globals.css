@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --rosa: #b7426c;
+  --rosa-logo: #e88d8d;
+  --rosa-claro: #ffebee;
+  --rosa-oscuro: #6a2b51;
+  --tinta: #1f2937;
+}
+
+html {
+  font-size: 17px;
+}
+
+body {
+  background: #f8fafc;
+  color: var(--tinta);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Alto contraste y tipografía grande para usuarias con baja alfabetización digital */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-lg font-bold transition bg-[var(--rosa)] text-white hover:bg-[var(--rosa-oscuro)] active:scale-[0.98];
+}
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-lg font-bold transition bg-white text-[var(--rosa)] border-2 border-[var(--rosa)] hover:bg-[var(--rosa-claro)];
+}
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-lg font-bold transition bg-slate-100 text-slate-800 hover:bg-slate-200;
+}
+.card {
+  @apply rounded-2xl bg-white p-5 shadow-sm border border-slate-200;
+}
+.input {
+  @apply w-full rounded-xl border-2 border-slate-300 px-4 py-3 text-lg focus:border-[var(--rosa)] focus:outline-none bg-white;
+}
+.label {
+  @apply mb-1 block text-base font-bold text-slate-700;
+}
+.badge {
+  @apply inline-flex items-center rounded-full px-3 py-1 text-sm font-bold;
+}
