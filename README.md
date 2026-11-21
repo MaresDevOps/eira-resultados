@@ -130,8 +130,8 @@ DESCARGADO_PACIENTE | ENTREGADO_ASISTIDO`
 ## 4. Despliegue en AWS EC2 (Debian)
 
 ```bash
-git clone <repo> && cd eira-resultados
-sudo bash scripts/deploy-debian.sh
+git clone https://github.com/MaresDevOps/eira-resultados.git && cd eira-resultados
+sudo bash scripts/deploy-debian.sh https://github.com/MaresDevOps/eira-resultados.git
 ```
 
 El script instala Docker, abre UFW (22 + 3000), genera `.env` con
