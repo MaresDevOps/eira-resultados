@@ -753,23 +753,42 @@ export function BandejaPanel() {
         const abs = (m.body.match(/https?:\/\/[^\s]+\/acceso\/[A-Za-z0-9_-]+/) ?? [null])[0];
         const rel = (m.body.match(/\/acceso\/[A-Za-z0-9_-]+/) ?? [null])[0];
         const urlAbs = abs ?? (rel ? `${window.location.origin}${rel}` : null);
+        const canal = m.channel === "SMS_SIMULADO" ? "SMS (simulado)" : m.channel === "CORREO_SIMULADO" ? "Correo (simulado)" : m.channel;
+        const icono = m.channel?.includes("CORREO") ? "✉️" : "📱";
+        const textoLimpio = m.body.replace(/https?:\/\/[^\s]+\/acceso\/[A-Za-z0-9_-]+/, "{enlace}");
+        const partes = textoLimpio.split("{enlace}");
         return (
           <div key={m.id} className="card">
-            <p className="text-sm font-bold text-slate-500">Para: {m.toPhone} · {m.channel} · {fmtFecha(m.createdAt)}</p>
-            <div className="mt-2 flex flex-col items-start gap-3 sm:flex-row">
-              <div className="flex-1 rounded-2xl rounded-tl-sm bg-[var(--rosa-claro)] p-4 text-base">
-                {m.body}
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="font-black text-slate-700">{icono} Para: {m.toPhone}</span>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500">{canal}</span>
+              <span className="text-xs text-slate-400">{fmtFecha(m.createdAt)}</span>
+            </div>
+            <div className="mt-3 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+              <div className="min-w-0 flex-1">
+                <div className="rounded-2xl rounded-tl-sm bg-[var(--rosa-claro)] p-4 text-base leading-relaxed">
+                  {partes[0]}
+                  {urlAbs && (
+                    <span className="my-1 inline-block rounded-lg bg-white/80 px-2 py-1 font-mono text-xs font-bold text-[var(--rosa)] break-all">
+                      {urlAbs}
+                    </span>
+                  )}
+                  {partes[1]}
+                </div>
+                {m.otpCode && (
+                  <p className="mt-3 flex items-center gap-2 text-sm text-slate-500">
+                    Código de verificación <span className="text-xs">(solo visible en el simulador)</span>:
+                    <span className="rounded-lg bg-slate-800 px-3 py-1 font-mono text-lg font-black tracking-widest text-white">{m.otpCode}</span>
+                  </p>
+                )}
               </div>
               {urlAbs && (
-                <div className="shrink-0 rounded-xl border border-slate-200 bg-white p-2 text-center">
-                  <QRCodeSVG value={urlAbs} size={110} fgColor="#b7426c" />
-                  <p className="mt-1 text-xs text-slate-400">Escanear con celular</p>
+                <div className="shrink-0 rounded-2xl border-2 border-[var(--rosa)]/30 bg-white p-3 text-center shadow-sm">
+                  <QRCodeSVG value={urlAbs} size={150} fgColor="#b7426c" />
+                  <p className="mt-2 text-xs font-bold text-slate-500">Escanea con el celular</p>
                 </div>
               )}
             </div>
-            {m.otpCode && (
-              <p className="mt-2 text-sm text-slate-500">Código de verificación (solo visible en este simulador): <b className="font-mono">{m.otpCode}</b></p>
-            )}
           </div>
         );
       })}
