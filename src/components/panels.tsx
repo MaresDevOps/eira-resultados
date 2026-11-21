@@ -86,10 +86,14 @@ export function LaboratorioPanel({ onChanged }: { onChanged: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const { studies } = useStudies();
 
+  const [buscado, setBuscado] = useState(false);
+
   async function buscar() {
+    setErr(null);
     const r = await fetch(`/api/patients?q=${encodeURIComponent(q)}`);
     const d = await r.json();
     setResults(d.patients ?? []);
+    setBuscado(true);
   }
 
   function generarPdf() {
@@ -109,7 +113,11 @@ export function LaboratorioPanel({ onChanged }: { onChanged: () => void }) {
     setErr(null);
     setMsg(null);
     if (!patient || !file) {
-      setErr("Selecciona una paciente y un archivo PDF.");
+      setErr(
+        !patient
+          ? "Falta la paciente: escribe su nombre o CURP arriba, presiona Buscar y haz clic en su tarjeta para seleccionarla."
+          : "Falta el archivo PDF del resultado."
+      );
       return;
     }
     setBusy(true);
@@ -148,7 +156,8 @@ export function LaboratorioPanel({ onChanged }: { onChanged: () => void }) {
               className="input"
               placeholder="Ej. María|1994-03-15  o  LOHM940315"
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(e) => { setQ(e.target.value); setBuscado(false); }}
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), buscar())}
             />
             <button type="button" className="btn-secondary whitespace-nowrap" onClick={buscar}>
               Buscar
@@ -181,6 +190,12 @@ export function LaboratorioPanel({ onChanged }: { onChanged: () => void }) {
               </li>
             ))}
           </ul>
+        )}
+
+        {buscado && results.length === 0 && !patient && (
+          <p className="rounded-xl bg-amber-50 p-3 text-sm font-bold text-amber-800">
+            Sin resultados para "{q}". Prueba <b>Nombre|fecha de nacimiento</b> (ej. María|1994-03-15) o la CURP.
+          </p>
         )}
 
         {patient && (
