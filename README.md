@@ -16,6 +16,8 @@ o sin conectividad propia.
 
 ---
 
+> **Para el jurado:** guion de demo de 5 minutos y texto de Devpost en [DEVPOST.md](DEVPOST.md).
+
 ## 1. Instalación y ejecución (2 comandos)
 
 ```bash
