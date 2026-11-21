@@ -285,10 +285,13 @@ export function MedicoPanel({ onChanged }: { onChanged: () => void }) {
   const [notas, setNotas] = useState<Record<string, string>>({});
   const [lastNotify, setLastNotify] = useState<any>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
   const [revocando, setRevocando] = useState<Study | null>(null);
   const [razon, setRazon] = useState("identidad_incorrecta");
   const [razonDetalle, setRazonDetalle] = useState("");
   const [qReasignar, setQReasignar] = useState("");
+  const [buscandoReasign, setBuscandoReasign] = useState(false);
+  const [buscoReasign, setBuscoReasign] = useState(false);
   const [candidatos, setCandidatos] = useState<Patient[]>([]);
   const [reasignarId, setReasignarId] = useState("");
 
@@ -345,8 +348,12 @@ export function MedicoPanel({ onChanged }: { onChanged: () => void }) {
 
   async function buscarReasignacion() {
     if (!qReasignar.trim()) return;
+    setBuscandoReasign(true);
     const r = await fetch(`/api/patients?q=${encodeURIComponent(qReasignar)}`);
-    setCandidatos(await r.json());
+    const d = await r.json();
+    setCandidatos(d.patients ?? []);
+    setBuscandoReasign(false);
+    setBuscoReasign(true);
   }
 
   async function ejecutarRevocacion() {
@@ -363,7 +370,12 @@ export function MedicoPanel({ onChanged }: { onChanged: () => void }) {
     });
     const d = await r.json();
     if (!r.ok) setErr(d.error ?? "Error");
-    else { setRevocando(null); setRazonDetalle(""); setReasignarId(""); setCandidatos([]); setQReasignar(""); }
+    else {
+      setMsg(d.study?.estado === "EN_REVISION_CLINICA"
+        ? `PDF desvinculado y reasignado a ${d.study.patient?.nombreCompleto ?? "otro expediente"} — vuelve a revisión clínica.`
+        : `Acceso revocado: ${revocando.folio} quedó como Revocado por corrección. Registro en bitácora.`);
+      setRevocando(null); setRazonDetalle(""); setReasignarId(""); setCandidatos([]); setQReasignar(""); setBuscoReasign(false);
+    }
     reload();
     onChanged();
   }
@@ -371,7 +383,7 @@ export function MedicoPanel({ onChanged }: { onChanged: () => void }) {
   const btnRevocar = (s: Study) => (
     <button
       className="btn mt-1 border border-rose-300 bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700 hover:bg-rose-100"
-      onClick={() => { setRevocando(s); setRazon("identidad_incorrecta"); setReasignarId(""); setCandidatos([]); }}
+      onClick={() => { setRevocando(s); setRazon("identidad_incorrecta"); setReasignarId(""); setCandidatos([]); setBuscoReasign(false); setQReasignar(""); setErr(null); }}
     >
       Revocar acceso
     </button>
@@ -379,7 +391,8 @@ export function MedicoPanel({ onChanged }: { onChanged: () => void }) {
 
   return (
     <div className="space-y-5">
-      {err && <p className="rounded-xl bg-red-50 p-3 font-bold text-red-700">{err}</p>}
+      {err && !revocando && <p className="rounded-xl bg-red-50 p-3 font-bold text-red-700">{err}</p>}
+      {msg && <p className="rounded-xl bg-emerald-50 p-3 font-bold text-emerald-800">{msg}</p>}
 
       <div className="card flex flex-col gap-3 sm:flex-row sm:items-center">
         <input
@@ -555,6 +568,7 @@ export function MedicoPanel({ onChanged }: { onChanged: () => void }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setRevocando(null)}>
           <div className="card w-full max-w-lg space-y-4" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-xl font-black text-rose-700">Revocar acceso / Desvincular PDF</h2>
+            {err && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{err}</p>}
             <p className="text-sm text-slate-600">
               Estudio <b>{revocando.folio}</b> de <b>{revocando.patient?.nombreCompleto}</b>.
               Se invalidará el token de inmediato y quedará registro inmutable en la bitácora.
@@ -574,16 +588,33 @@ export function MedicoPanel({ onChanged }: { onChanged: () => void }) {
             <div className="rounded-xl border border-slate-200 p-3">
               <p className="text-sm font-bold">Reasignar el PDF a otro expediente (opcional)</p>
               <div className="mt-2 flex gap-2">
-                <input className="input flex-1" value={qReasignar} onChange={(e) => setQReasignar(e.target.value)} placeholder="Nombre|fechaNac o CURP" />
-                <button className="btn-secondary" onClick={buscarReasignacion}>Buscar</button>
+                <input
+                  className="input flex-1"
+                  value={qReasignar}
+                  onChange={(e) => setQReasignar(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && buscarReasignacion()}
+                  placeholder="Nombre|fechaNac o CURP"
+                />
+                <button className="btn-secondary" onClick={buscarReasignacion} disabled={buscandoReasign}>
+                  {buscandoReasign ? "…" : "Buscar"}
+                </button>
               </div>
-              {candidatos.length > 0 && (
+              {candidatos.length > 0 ? (
                 <select className="input mt-2" value={reasignarId} onChange={(e) => setReasignarId(e.target.value)}>
                   <option value="">— Sin reasignación (solo revocar) —</option>
                   {candidatos.filter((p) => p.id !== revocando.patientId).map((p) => (
                     <option key={p.id} value={p.id}>{p.nombreCompleto} · {p.fechaNacimiento} · {p.curp}</option>
                   ))}
                 </select>
+              ) : (
+                qReasignar.trim() && !buscandoReasign && candidatos.length === 0 && buscoReasign && (
+                  <p className="mt-2 text-xs font-bold text-amber-700">Sin resultados — prueba con CURP o nombre parcial.</p>
+                )
+              )}
+              {reasignarId && (
+                <p className="mt-2 rounded-lg bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-800">
+                  ✓ El PDF se reasignará al expediente seleccionado
+                </p>
               )}
               <p className="mt-2 text-xs text-slate-500">Con reasignación, el estudio vuelve a <b>En revisión clínica</b> (exige nueva revisión por el cambio de paciente). Sin reasignación queda <b>Revocado por corrección</b>.</p>
             </div>
