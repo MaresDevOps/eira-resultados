@@ -2,7 +2,7 @@
 
 **Reto 4 · Vibeathon Nerdearla 2026 · Prototipo funcional**
 
-🔗 **Demo en vivo:** http://18.217.201.5:3000 (AWS EC2 · Docker: app + PostgreSQL + Valkey)
+🔗 **Demo en vivo:** https://18.217.201.5.sslip.io (AWS EC2 · HTTPS con Let's Encrypt · Docker: app + PostgreSQL + Valkey + Caddy)
 Usuarios demo en la sección 1 — contraseña `demo1234` o acceso rápido de 1 clic.
 
 Desarrollado para el **Programa Tamizaje Rosa** de **EIRA, Movimiento Rosa A.C.**
